@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baby Jeopardy - Final Edition 🌸</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sakura-pink: #FFB7C5;
+            --deep-cherry: #8E244D;
+            --gold-accent: #D4AF37;
+            --jeopardy-blue: #060CE9;
+            --jeopardy-gold: #FFCC00;
+        }
+
+        body {
+            background-color: #fce4ec;
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        h1 { font-family: 'Playfair Display', serif; color: var(--deep-cherry); font-size: 50px; margin: 10px 0; text-shadow: 2px 2px white; }
+
+        .jeopardy-board {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            width: 1250px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 5px solid var(--sakura-pink);
+        }
+
+        .category-header {
+            background: var(--deep-cherry);
+            color: white;
+            height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-weight: 800;
+            font-size: 16px;
+            border-radius: 12px;
+            padding: 10px;
+            text-transform: uppercase;
+        }
+
+        .clue-card {
+            background-color: var(--jeopardy-blue);
+            color: var(--jeopardy-gold);
+            height: 110px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            font-weight: 800;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .clue-card:hover { transform: scale(1.03); background-color: #1a23ff; }
+        .clue-card.visited { background-color: #e0e0e0; color: #bdbdbd; cursor: default; }
+
+        /* Overlays */
+        #clue-overlay, #dd-overlay, #winner-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1000; flex-direction: column; align-items: center; justify-content: center;
+            padding: 10%; box-sizing: border-box; text-align: center;
+        }
+
+        #clue-overlay { background-color: var(--jeopardy-blue); }
+        #dd-overlay { background: linear-gradient(45deg, #8E244D, #D4AF37, #8E244D); background-size: 400% 400%; animation: gradientBG 3s ease infinite; }
+        #winner-overlay { background: rgba(255, 255, 255, 0.95); }
+
+        @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+        .dd-text { color: white; font-size: 80px; font-weight: 900; text-shadow: 4px 4px #000; margin-bottom: 20px; }
+        #clue-text { color: white; font-size: 45px; font-weight: 700; text-transform: uppercase; margin-bottom: 40px; }
+        #answer-text { display: none; color: var(--jeopardy-gold); font-size: 40px; font-weight: 800; border-top: 4px solid var(--jeopardy-gold); padding-top: 30px; text-transform: uppercase; }
+
+        .overlay-btn { margin-top: 60px; padding: 18px 50px; font-size: 24px; font-weight: 800; border-radius: 50px; border: none; cursor: pointer; text-transform: uppercase; }
+        .show-ans-btn { background-color: var(--jeopardy-gold); color: var(--jeopardy-blue); }
+        .close-btn { background-color: white; color: var(--jeopardy-blue); display: none; }
+        .reveal-winner-btn { background-color: var(--deep-cherry); color: white; margin-top: 20px; border-radius: 12px; }
+
+        .scoreboard { display: flex; gap: 40px; margin-top: 30px; }
+        .score-pill { background: white; padding: 15px 35px; border-radius: 15px; border: 4px solid var(--sakura-pink); font-size: 24px; font-weight: 800; color: var(--deep-cherry); display: flex; align-items: center; gap: 20px; }
+        .score-ctrl { cursor: pointer; background: var(--sakura-pink); color: var(--deep-cherry); width: 30px; height: 30px; border-radius: 5px; border: none; font-weight: 800; }
+
+        .confetti { position: fixed; font-size: 30px; user-select: none; z-index: 2000; pointer-events: none; animation: fall linear forwards; }
+        @keyframes fall { to { transform: translateY(110vh) rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <h1>Baby Jeopardy</h1>
+
+    <div class="jeopardy-board" id="board"></div>
+
+    <div class="scoreboard">
+        <div class="score-pill">
+            <div>TEAM MOM: <span id="score-mom">0</span></div>
+            <div style="display:flex; flex-direction:column; gap:5px;">
+                <button class="score-ctrl" onclick="changeScore('mom', 100)">+</button>
+                <button class="score-ctrl" onclick="changeScore('mom', -100)">-</button>
+            </div>
+        </div>
+        <div class="score-pill">
+            <div>TEAM DAD: <span id="score-dad">0</span></div>
+            <div style="display:flex; flex-direction:column; gap:5px;">
+                <button class="score-ctrl" onclick="changeScore('dad', 100)">+</button>
+                <button class="score-ctrl" onclick="changeScore('dad', -100)">-</button>
+            </div>
+        </div>
+    </div>
+
+    <button class="overlay-btn reveal-winner-btn" onclick="revealWinner()">Final Results 🌸</button>
+
+    <div id="dd-overlay">
+        <div class="dd-text">DAILY DOUBLE</div>
+        <p style="color: white; font-size: 24px;">Team, place your wager!</p>
+        <button class="overlay-btn" onclick="proceedToClue()">Show Clue</button>
+    </div>
+
+    <div id="clue-overlay">
+        <div id="clue-text">CLUE</div>
+        <div id="answer-text">ANSWER</div>
+        <div>
+            <button class="overlay-btn show-ans-btn" onclick="showAnswer()">Show Answer</button>
+            <button class="overlay-btn close-btn" onclick="closeClue()">Back to Board</button>
+        </div>
+    </div>
+
+    <div id="winner-overlay" onclick="this.style.display='none'">
+        <h2 id="winner-text" style="font-family:'Playfair Display'; font-size: 70px; color: var(--deep-cherry);"></h2>
+        <p style="font-size: 24px; color: var(--gold-accent);">Congratulations!</p>
+    </div>
+
+    <script>
+        let currentActiveClue = null;
+        let scores = { mom: 0, dad: 0 };
+
+        const gameData = [
+            {
+                category: "90s Desi Kids TV",
+                clues: [
+                    { v: 100, q: "This magical fairy appeared to help a young girl named Fruity in solving problems.", a: "Who is Son Pari?" },
+                    { v: 200, q: "In this show, a boy named Sanju finds a magical pencil that brings drawings to life.", a: "Who is Shaka Laka Boom Boom?" },
+                    { v: 300, q: "This show followed students in a boarding school, exploring friendship and mischief.", a: "Who is Hip Hip Hurray?" },
+                    { v: 400, q: "This series featured a young boy superhero solving crimes using his intelligence and a magical ring.", a: "Who is Junior G?", isDD: true },
+                    { v: 500, q: "Starring Milind Soman, this sci-fi show followed a space warrior and his crew in the year 2123.", a: "Who is Captain Vyom?" }
+                ]
+            },
+            {
+                category: "Baby Anatomy",
+                clues: [
+                    { v: 100, q: "The soft spot on a baby's head.", a: "What is a fontanelle?" },
+                    { v: 200, q: "Babies are born without this bone in their legs.", a: "What are kneecaps?" },
+                    { v: 300, q: "A baby's first hair that covers their body in the womb.", a: "What is lanugo?" },
+                    { v: 400, q: "A newborn is born with approximately this many bones before they fuse together.", a: "What is 300?" },
+                    { v: 500, q: "This is the only body part a baby is born with that is already almost at its full adult size.", a: "What are the Eyes?" }
+                ]
+            },
+            {
+                category: "Desi Baby Life",
+                clues: [
+                    { v: 100, q: "The ritual of shaving a baby's first head of hair.", a: "What is Mundan?" },
+                    { v: 200, q: "The black mark applied to ward off 'Buri Nazar'.", a: "What is Kajal (or Teeka)?" },
+                    { v: 300, q: "The ceremony marking a baby's first intake of solid food.", a: "What is Annaprashan?" },
+                    { v: 400, q: "The traditional silver or gold waist thread worn by infants.", a: "What is a Kardhan?" },
+                    { v: 500, q: "Ancient 'water' given to babies to relieve colic/gas.", a: "What is Gripe Water (or Janma Ghunti)?" }
+                ]
+            },
+            {
+                category: "Celebrity Parents",
+                clues: [
+                    { v: 100, q: "This Bollywood 'Power Couple' has two sons named Taimur and Jehangir (Jeh).", a: "Who are Kareena Kapoor and Saif Ali Khan?" },
+                    { v: 100, q: "Meghan Markle and Prince Harry named their daughter this.", a: "Who is Lilibet?" },
+                    { v: 300, q: "This famous couple had a son named Saint and daughter named Chicago.", a: "Who are Kim Kardashian and Kanye West?" },
+                    { v: 400, q: "This singer and her partner A$AP Rocky named their two sons RZA and Riot Rose.", a: "Who is Rihanna?" },
+                    { v: 500, q: "This pop star had a baby named Daisy Dove.", a: "Who is Katy Perry?" }
+                ]
+            },
+            {
+                category: "Pop Culture",
+                clues: [
+                    { v: 100, q: "The YouTube song that became the first video to reach 10 billion views.", a: "What is 'Baby Shark'?" },
+                    { v: 200, q: "This 90s Bollywood classic features a silent Sardarji child who famously says: 'Tussi ja rahe ho? Tussi na jao!'", a: "What is Kuch Kuch Hota Hai?" },
+                    { v: 300, q: "The 1987 film where three bachelors are left in charge of an infant.", a: "What is 'Three Men and a Baby'?" },
+                    { v: 400, q: "In the 90s classic 'Baby's Day Out', this is the city where the baby outmaneuvers three kidnappers.", a: "What is Chicago?" },
+                    { v: 500, q: "This 90s health drink advertisement famously featured two 'growing' children who both grew up to be Bollywood superstars: Shahid Kapoor and Ayesha Takia.", a: "What is Complan?", isDD: true }
+                ]
+            }
+        ];
+
+        function initBoard() {
+            const board = document.getElementById('board');
+            gameData.forEach(cat => {
+                const header = document.createElement('div');
+                header.className = 'category-header';
+                header.innerText = cat.category;
+                board.appendChild(header);
+            });
+            for (let i = 0; i < 5; i++) {
+                gameData.forEach(cat => {
+                    const clue = cat.clues[i];
+                    const card = document.createElement('div');
+                    card.className = 'clue-card';
+                    card.innerText = clue.v;
+                    card.onclick = () => handleClueClick(card, clue);
+                    board.appendChild(card);
+                });
+            }
+        }
+
+        function handleClueClick(card, clue) {
+            if (card.classList.contains('visited')) return;
+            card.classList.add('visited');
+            currentActiveClue = clue;
+            if (clue.isDD) {
+                document.getElementById('dd-overlay').style.display = 'flex';
+            } else {
+                proceedToClue();
+            }
+        }
+
+        function proceedToClue() {
+            document.getElementById('dd-overlay').style.display = 'none';
+            document.getElementById('clue-text').innerText = currentActiveClue.q;
+            document.getElementById('answer-text').innerText = currentActiveClue.a;
+            document.getElementById('answer-text').style.display = 'none';
+            document.querySelector('.show-ans-btn').style.display = 'block';
+            document.querySelector('.close-btn').style.display = 'none';
+            document.getElementById('clue-overlay').style.display = 'flex';
+        }
+
+        function showAnswer() {
+            document.getElementById('answer-text').style.display = 'block';
+            document.querySelector('.show-ans-btn').style.display = 'none';
+            document.querySelector('.close-btn').style.display = 'block';
+        }
+
+        function closeClue() { document.getElementById('clue-overlay').style.display = 'none'; }
+        
+        function changeScore(team, amount) {
+            scores[team] += amount;
+            document.getElementById(`score-${team}`).innerText = scores[team];
+        }
+
+        function revealWinner() {
+            const winnerText = document.getElementById('winner-text');
+            const overlay = document.getElementById('winner-overlay');
+            let winner = scores.mom > scores.dad ? "🌸 Team Mom Wins! 🌸" : (scores.dad > scores.mom ? "🌸 Team Dad Wins! 🌸" : "It's a Tie! 🌸");
+            winnerText.innerText = winner;
+            overlay.style.display = 'flex';
+            for(let i = 0; i < 60; i++) setTimeout(createConfetti, i * 50);
+        }
+
+        function createConfetti() {
+            const emojis = ['🌸', '✨', '🍼', '💖', '👶'];
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+            confetti.style.left = Math.random() * 100 + 'vw';
+            confetti.style.top = '-5vh';
+            confetti.style.animationDuration = (Math.random() * 3 + 2) + 's';
+            document.body.appendChild(confetti);
+            setTimeout(() => confetti.remove(), 5000);
+        }
+
+        initBoard();
+    </script>
+</body>
+</html>
